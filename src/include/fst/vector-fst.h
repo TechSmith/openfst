@@ -6,6 +6,7 @@
 #ifndef FST_VECTOR_FST_H_
 #define FST_VECTOR_FST_H_
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
