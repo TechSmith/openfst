@@ -230,13 +230,15 @@ template <typename T>
 class BlockAllocator {
  public:
   using Allocator = std::allocator<T>;
-  using size_type = typename Allocator::size_type;
-  using difference_type = typename Allocator::difference_type;
-  using pointer = typename Allocator::pointer;
-  using const_pointer = typename Allocator::const_pointer;
-  using reference = typename Allocator::reference;
-  using const_reference = typename Allocator::const_reference;
-  using value_type = typename Allocator::value_type;
+  using AllocatorTraits = std::allocator_traits<Allocator>;
+
+  using size_type = typename AllocatorTraits::size_type;
+  using difference_type = typename AllocatorTraits::difference_type;
+  using pointer = typename AllocatorTraits::pointer;
+  using const_pointer = typename AllocatorTraits::const_pointer;
+  using reference = typename AllocatorTraits::value_type&;
+  using const_reference = const typename AllocatorTraits::value_type&;
+  using value_type = typename AllocatorTraits::value_type;
 
   template <typename U>
   struct rebind {
@@ -267,25 +269,37 @@ class BlockAllocator {
     return Allocator().address(ref);
   }
 
-  size_type max_size() const { return Allocator().max_size(); }
+  size_type max_size() const {
+     Allocator alloc;
+     return AllocatorTraits::max_size( alloc );
+  }
 
   template <class U, class... Args>
   void construct(U *p, Args &&... args) {
-    Allocator().construct(p, std::forward<Args>(args)...);
+     Allocator alloc;
+     AllocatorTraits::construct( alloc, p, std::forward<Args>( args )... );
   }
 
-  void destroy(pointer p) { Allocator().destroy(p); }
+  void destroy( pointer p ) {
+     Allocator alloc;
+     AllocatorTraits::destroy( alloc, p );
+  }
 
-  pointer allocate(size_type n, const void *hint = nullptr) {
+  pointer allocate(size_type n, [[maybe_unused]] const void *hint = nullptr) {
     if (n * kAllocFit <= kAllocSize) {
       return static_cast<pointer>(Arena()->Allocate(n));
     } else {
-      return Allocator().allocate(n, hint);
+       Allocator alloc;
+       return AllocatorTraits::allocate( alloc, n );
     }
   }
 
   void deallocate(pointer p, size_type n) {
-    if (n * kAllocFit > kAllocSize) Allocator().deallocate(p, n);
+     if (n * kAllocFit > kAllocSize)
+     {
+        Allocator alloc;
+        AllocatorTraits::deallocate( alloc, p, n );
+     }
   }
 
   MemoryArenaCollection *Arenas() const { return arenas_; }
@@ -322,13 +336,15 @@ template <typename T>
 class PoolAllocator {
  public:
   using Allocator = std::allocator<T>;
-  using size_type = typename Allocator::size_type;
-  using difference_type = typename Allocator::difference_type;
-  using pointer = typename Allocator::pointer;
-  using const_pointer = typename Allocator::const_pointer;
-  using reference = typename Allocator::reference;
-  using const_reference = typename Allocator::const_reference;
-  using value_type = typename Allocator::value_type;
+  using AllocatorTraits = std::allocator_traits<Allocator>;
+
+  using size_type = typename AllocatorTraits::size_type;
+  using difference_type = typename AllocatorTraits::difference_type;
+  using pointer = typename AllocatorTraits::pointer;
+  using const_pointer = typename AllocatorTraits::const_pointer;
+  using reference = typename AllocatorTraits::value_type &;
+  using const_reference = const typename AllocatorTraits::value_type &;
+  using value_type = typename AllocatorTraits::value_type;
 
   template <typename U>
   struct rebind {
@@ -359,16 +375,23 @@ class PoolAllocator {
     return Allocator().address(ref);
   }
 
-  size_type max_size() const { return Allocator().max_size(); }
+  size_type max_size() const {
+     Allocator alloc;
+     return AllocatorTraits::max_size( alloc );
+  }
 
   template <class U, class... Args>
   void construct(U *p, Args &&... args) {
-    Allocator().construct(p, std::forward<Args>(args)...);
+    Allocator alloc;
+    AllocatorTraits::construct( alloc, p, std::forward<Args>(args)... );
   }
 
-  void destroy(pointer p) { Allocator().destroy(p); }
+  void destroy( pointer p ) {
+     Allocator alloc;
+     AllocatorTraits::destroy( alloc, p );
+  }
 
-  pointer allocate(size_type n, const void *hint = nullptr) {
+  pointer allocate(size_type n, [[maybe_unused]] const void *hint = nullptr) {
     if (n == 1) {
       return static_cast<pointer>(Pool<1>()->Allocate());
     } else if (n == 2) {
@@ -384,7 +407,8 @@ class PoolAllocator {
     } else if (n <= 64) {
       return static_cast<pointer>(Pool<64>()->Allocate());
     } else {
-      return Allocator().allocate(n, hint);
+      Allocator alloc;
+      return AllocatorTraits::allocate( alloc, n );
     }
   }
 

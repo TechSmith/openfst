@@ -1,6 +1,8 @@
 file(GLOB HEADER_FILES ../include/fst/script/*.h)
 message(STATUS "${HEADER_FILES}")
 
+set(CMAKE_CXX_STANDARD 23)
+
 add_library(fstscript
   arciterator-class.cc
   arcsort.cc

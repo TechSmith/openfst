@@ -1,5 +1,6 @@
 FILE(GLOB HEADER_FILES ../include/fst/*.h)
 
+set(CMAKE_CXX_STANDARD 23)
 
 add_library(fst
   compat.cc

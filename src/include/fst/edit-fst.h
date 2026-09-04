@@ -550,7 +550,7 @@ class EditFstImpl : public FstImpl<A> {
   // of the wrapped fst via a MutableArcIterator, or adding a new state via
   // AddState().
   void MutateCheck() {
-    if (!data_.unique()) {
+    if (data_.use_count() != 1) {
       data_ =
           std::make_shared<EditFstData<Arc, WrappedFstT, MutableFstT>>(*data_);
     }
